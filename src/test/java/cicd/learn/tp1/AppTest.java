@@ -35,4 +35,16 @@ public class AppTest
     {
         assertTrue( true );
     }
+
+    public void test1(){
+        assertEquals(2,1+1);
+    }
+
+    public void test2(){
+        assertEquals(5,1+1);
+    }
+
+    public void test3(){
+        assertEquals(4,2*2);
+    }
 }
