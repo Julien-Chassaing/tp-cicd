@@ -2,28 +2,39 @@ pipeline {
     agent any
 
     stages {
-        stage('Build') {
+        stage('Package') {
             steps {
-                // Get some code from a GitHub repository
-
-                // Run Maven on a Unix agent.
-                //sh "mvn -Dmaven.test.failure.ignore=true clean package"
-
-                // To run Maven on a Windows agent, use
-                bat "mvn -Dmaven.test.failure.ignore=true clean package"
-            }
-
-            post {
-                // If Maven was able to run the tests, even if some of the test
-                // failed, record the test results and archive the jar file.
-                always {
-                    junit '**/surefire-reports/*.xml'
-                }
-                success {
-                    junit '**/target/surefire-reports/TEST-*.xml'
-                    archiveArtifacts 'target/*.jar'
-                }
+            	sh 'mvn clean'
+                sh 'mvn package' 
             }
         }
+        stage('Analyse') {
+            steps {
+            	sh 'mvn checkstyle:checkstyle'
+                sh 'mvn spotbugs:spotbugs'
+                sh 'mvn pmd:pmd' 
+            }
+        }
+        stage('Publish') {
+            steps {
+                archiveArtifacts '/target/*.jar'
+            }
+        }
+        
     }
+    
+    post {
+        always {
+            junit '**/surefire-reports/*.xml'
+            
+			recordIssues enabledForFailure: true, tools: [mavenConsole(), java(), javaDoc()]
+            recordIssues enabledForFailure: true, tool: checkStyle()
+            recordIssues enabledForFailure: true, tool: spotBugs()
+            recordIssues enabledForFailure: true, tool: cpd(pattern: '**/target/cpd.xml')
+            recordIssues enabledForFailure: true, tool: pmdParser(pattern: '**/target/pmd.xml')
+            
+        }
+
+    }
+
 }
